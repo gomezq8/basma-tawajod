@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">بصمة التواجد</string>
+    <string name="ringo_reader_desc">يقرأ رسالة "تم تسجيل الدخول" من تطبيق Ringo HR فقط، عشان ياخذ وقت بصمة الدخول بالضبط ويحسب وقت بصمة التواجد. ما يقرأ أي تطبيق ثاني.</string>
+</resources>

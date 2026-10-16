@@ -1,0 +1,16 @@
+{
+  "package_prefix": "com.ringo",
+  "entry": [
+    "تم تسجيل الدخول",
+    "تم تسجيل الحضور",
+    "تم الدخول",
+    "check in successful",
+    "checked in successfully",
+    "clocked in successfully"
+  ],
+  "ignore": [
+    "خروج", "انصراف", "تواجد",
+    "check out", "checked out", "clock out", "presence",
+    "كلمة المرور", "password"
+  ]
+}
