@@ -32,23 +32,19 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Restore signing key
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::Missing KEYSTORE_BASE64 secret. Add it under Settings > Secrets and variables > Actions."
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-          echo "KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-
       - name: Build APK
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle assembleRelease --no-daemon
+          # The key file is in the repo, locked by this one secret.
+          KEYSTORE_PATH: ${{ github.workspace }}/signing/release-key.jks
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          KEY_ALIAS: basma
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Missing SIGNING_PASSWORD secret. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          gradle assembleRelease --no-daemon
 
       - name: Name the APK
         run: cp app/build/outputs/apk/release/app-release.apk "basma-tawajod-1.0.${VERSION_CODE}.apk"
