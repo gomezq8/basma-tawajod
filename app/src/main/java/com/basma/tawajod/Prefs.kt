@@ -6,9 +6,10 @@ import android.content.Context
 class Prefs(context: Context) {
     private val sp = context.getSharedPreferences("basma", Context.MODE_PRIVATE)
 
-    var setupDone: Boolean
-        get() = sp.getBoolean("setupDone", false)
-        set(v) = sp.edit().putBoolean("setupDone", v).apply()
+    /** Permissions were asked automatically once (first launch). After that we only ask when tapped. */
+    var autoAsked: Boolean
+        get() = sp.getBoolean("autoAsked", false)
+        set(v) = sp.edit().putBoolean("autoAsked", v).apply()
 
     // ---- Work location ----
     var hasLocation: Boolean

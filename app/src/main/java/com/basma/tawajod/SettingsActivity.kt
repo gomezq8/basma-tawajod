@@ -69,12 +69,8 @@ class SettingsActivity : BaseActivity() {
         // --- Location
         section("موقع الدوام (احتياط)")
         group {
-            val locState = when {
-                !has(Manifest.permission.ACCESS_FINE_LOCATION) -> "مو مسموح"
-                p.hasLocation -> "محفوظ ✅"
-                else -> "مو محفوظ"
-            }
-            row("أنا بالدوام الحين، احفظ الموقع", locState, null) { saveLocation() }
+            row("أنا بالدوام الحين، احفظ الموقع", if (p.hasLocation) "محفوظ ✅" else "احفظ",
+                if (p.hasLocation && !locationOn()) "اسمح بالموقع «طوال الوقت» عشان يشتغل" else null) { saveLocation() }
             row("حجم المنطقة", "${p.radiusM} م", null) {
                 askNumber("نطاق الموقع بالمتر", p.radiusM) { p.radiusM = it.coerceIn(50, 2000); Scheduler.startWatching(this) }
             }
@@ -83,10 +79,9 @@ class SettingsActivity : BaseActivity() {
         // --- Setup
         section("التجهيز")
         group {
-            row("قراءة بصمة Ringo", if (ringoReaderOn()) "شغّال ✅" else "طافي", null) { openSetup() }
-            row("التنبيهات", if (notificationsOn()) "شغّال ✅" else "طافي", null) { openSetup() }
-            row("البطارية", if (batteryOn()) "مسموح ✅" else "مقيّد", null) { openSetup() }
-            row("الموقع", if (locationOn()) "مسموح ✅" else "طافي", null) { openSetup() }
+            row("قراءة بصمة Ringo", if (ringoReaderOn()) "شغّال ✅" else "شغّله", null) { askRingo() }
+            row("التنبيهات", if (notificationsOn()) "شغّال ✅" else "شغّله", null) { askNotifications() }
+            row("البطارية", if (batteryOn()) "مسموح ✅" else "اسمح", null) { askBattery() }
         }
 
         // --- Updates
@@ -153,8 +148,6 @@ class SettingsActivity : BaseActivity() {
 
     // ---- actions ----
 
-    private fun openSetup() = startActivity(Intent(this, SetupActivity::class.java))
-
     private fun pickTime(current: Int, done: (Int) -> Unit) =
         TimePickerDialog(this, { _, h, m -> done(h * 60 + m); render() }, current / 60, current % 60, false).show()
 
@@ -184,14 +177,21 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun saveLocation() {
-        if (!has(Manifest.permission.ACCESS_FINE_LOCATION)) { openSetup(); return }
+        if (!has(Manifest.permission.ACCESS_FINE_LOCATION)) { askLocation(); return }
         toast("جاري تحديد موقعك…")
         WorkLocation.saveHere(this) { ok, _ ->
             runOnUiThread {
                 toast(if (ok) "تم حفظ موقع الدوام ✅" else "ما قدرنا نحدد موقعك، شغّل الـ GPS وجرب")
                 render()
+                if (ok && !locationOn()) askLocation() // "always allow" so it works in the background
             }
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // Location just allowed from the "save" row → save straight away
+        if (requestCode == 12 && has(Manifest.permission.ACCESS_FINE_LOCATION)) saveLocation() else render()
     }
 
     private fun checkUpdate() {

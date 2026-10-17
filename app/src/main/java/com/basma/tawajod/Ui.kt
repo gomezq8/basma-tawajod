@@ -2,7 +2,9 @@ package com.basma.tawajod
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
+import android.app.AlertDialog
+import android.content.Intent
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
@@ -109,4 +111,37 @@ abstract class BaseActivity : Activity() {
         (Build.VERSION.SDK_INT < 29 || has(Manifest.permission.ACCESS_BACKGROUND_LOCATION))
     /** The things the app can't work without. */
     fun essentialsMissing() = !notificationsOn() || !ringoReaderOn() || !batteryOn()
+
+    // ---- Asking for each one (system pop-ups where Android allows it) ----
+    fun askNotifications() {
+        if (Build.VERSION.SDK_INT >= 33) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 11)
+    }
+
+    fun askBattery() = startActivity(
+        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+
+    /** Android has no pop-up for this one, so we open the right settings page with one line of help. */
+    fun askRingo() {
+        AlertDialog.Builder(this)
+            .setTitle("آخر خطوة 👆")
+            .setMessage("عشان نقرأ بصمتك من Ringo:\n\nاضغط «فتح» ← «التطبيقات المثبتة» ← «بصمة التواجد» ← شغّله")
+            .setPositiveButton("فتح") { _, _ -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+            .setNeutralButton("الزر مقفل؟") { _, _ ->
+                toast("اضغط ⋮ فوق ← «السماح بالإعدادات المحظورة» وارجع")
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+            }
+            .setNegativeButton("بعدين", null)
+            .show()
+    }
+
+    fun askLocation() {
+        if (!has(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 12)
+        } else if (Build.VERSION.SDK_INT >= 30 && !locationOn()) {
+            toast("اختر «الموقع» ← «السماح طوال الوقت»")
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        } else if (Build.VERSION.SDK_INT == 29 && !locationOn()) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 13)
+        }
+    }
 }

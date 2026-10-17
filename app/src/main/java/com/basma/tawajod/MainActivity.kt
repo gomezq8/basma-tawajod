@@ -25,9 +25,6 @@ class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Scheduler.createChannels(this)
-        if (!p.setupDone) {
-            startActivity(Intent(this, SetupActivity::class.java)); finish(); return
-        }
         root = column(20, 16)
         setContentView(ScrollView(this).apply { setBackgroundColor(pal.bg); addView(root) })
         Scheduler.startWatching(this)
@@ -36,8 +33,8 @@ class MainActivity : BaseActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (!p.setupDone) return
         render()
+        if (!p.autoAsked || askingNow) askNext()
         handler.post(ticker)
         Updater.checkAsync(this, notify = false) { rel -> runOnUiThread { if (rel != null) { release = rel; render() } } }
     }
@@ -45,6 +42,25 @@ class MainActivity : BaseActivity() {
     override fun onPause() {
         super.onPause(); handler.removeCallbacks(ticker)
     }
+
+    // ---- Ask for what's missing, one system pop-up after another ----
+    private var askStep = 0
+    private var askingNow = false
+
+    /** Each pop-up pauses the screen; when it closes, onResume calls this again for the next one. */
+    private fun askNext() {
+        askingNow = true
+        while (true) {
+            when (askStep++) {
+                0 -> if (!notificationsOn()) { askNotifications(); return }
+                1 -> if (!batteryOn()) { askBattery(); return }
+                2 -> if (!ringoReaderOn()) { askRingo(); return }
+                else -> { askingNow = false; p.autoAsked = true; render(); return }
+            }
+        }
+    }
+
+    private fun askAgain() { askStep = 0; askNext() }
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -78,10 +94,13 @@ class MainActivity : BaseActivity() {
         root.add(bar)
 
         // Setup not finished → one clear banner
-        if (essentialsMissing()) {
-            root.add(banner("⚠️  التطبيق مو جاهز يشتغل لحاله", "كمّل التجهيز") {
-                startActivity(Intent(this, SetupActivity::class.java))
-            }, top = 12)
+        if (p.autoAsked && !askingNow && essentialsMissing()) {
+            val what = when {
+                !ringoReaderOn() -> "قراءة بصمة Ringo طافية"
+                !notificationsOn() -> "التنبيهات طافية"
+                else -> "الجوال ممكن يسكّر التطبيق"
+            }
+            root.add(banner("⚠️  $what", "صلّحها") { askAgain() }, top = 12)
         }
 
         // Update available
