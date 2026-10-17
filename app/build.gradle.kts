@@ -52,4 +52,7 @@ android {
     }
 }
 
-// No extra libraries: the app uses only built-in Android APIs.
+dependencies {
+    // Map for picking the work location (OpenStreetMap, no API key needed)
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+}

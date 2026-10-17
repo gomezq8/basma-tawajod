@@ -112,11 +112,6 @@ class MainActivity : BaseActivity() {
         }
 
         root.add(hero(), top = 16)
-
-        // Optional: save work location once location is allowed but not saved yet
-        if (has(Manifest.permission.ACCESS_FINE_LOCATION) && !p.hasLocation) {
-            root.add(banner("📍  إذا أنت بالدوام الحين، احفظ الموقع (احتياط)", "احفظ") { saveLocation() }, top = 16)
-        }
     }
 
     /** The big card in the middle. States: day off / waiting / counting down / time's up. */
@@ -204,15 +199,5 @@ class MainActivity : BaseActivity() {
         val at = Scheduler.onArrived(this, millis, Scheduler.Source.MANUAL) ?: return
         toast("تمام! بنرن لك الساعة ${Rules.fmtMillis(at)}")
         render()
-    }
-
-    private fun saveLocation() {
-        toast("جاري تحديد موقعك…")
-        WorkLocation.saveHere(this) { ok, _ ->
-            runOnUiThread {
-                toast(if (ok) "تم حفظ موقع الدوام ✅" else "ما قدرنا نحدد موقعك، شغّل الـ GPS وجرب")
-                render()
-            }
-        }
     }
 }

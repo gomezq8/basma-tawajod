@@ -69,11 +69,12 @@ class SettingsActivity : BaseActivity() {
         // --- Location
         section("موقع الدوام (احتياط)")
         group {
-            row("أنا بالدوام الحين، احفظ الموقع", if (p.hasLocation) "محفوظ ✅" else "احفظ",
-                if (p.hasLocation && !locationOn()) "اسمح بالموقع «طوال الوقت» عشان يشتغل" else null) { saveLocation() }
-            row("حجم المنطقة", "${p.radiusM} م", null) {
-                askNumber("نطاق الموقع بالمتر", p.radiusM) { p.radiusM = it.coerceIn(50, 2000); Scheduler.startWatching(this) }
-            }
+            row("موقع الدوام", if (p.hasLocation) "${p.radiusM} م ✅" else "حدده",
+                when {
+                    !p.hasLocation -> "على الخريطة، أو شاركه من قوقل ماب"
+                    !locationOn() -> "اسمح بالموقع «طوال الوقت» عشان يشتغل"
+                    else -> null
+                }) { startActivity(Intent(this, MapPickActivity::class.java)) }
         }
 
         // --- Setup
@@ -174,24 +175,6 @@ class SettingsActivity : BaseActivity() {
             .setPositiveButton("حفظ") { _, _ ->
                 p.offDays = (0..6).filter { checked[it] }.map { (it + 1).toString() }.toSet(); render()
             }.show()
-    }
-
-    private fun saveLocation() {
-        if (!has(Manifest.permission.ACCESS_FINE_LOCATION)) { askLocation(); return }
-        toast("جاري تحديد موقعك…")
-        WorkLocation.saveHere(this) { ok, _ ->
-            runOnUiThread {
-                toast(if (ok) "تم حفظ موقع الدوام ✅" else "ما قدرنا نحدد موقعك، شغّل الـ GPS وجرب")
-                render()
-                if (ok && !locationOn()) askLocation() // "always allow" so it works in the background
-            }
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // Location just allowed from the "save" row → save straight away
-        if (requestCode == 12 && has(Manifest.permission.ACCESS_FINE_LOCATION)) saveLocation() else render()
     }
 
     private fun checkUpdate() {
