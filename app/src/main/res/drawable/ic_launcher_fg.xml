@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- clock ring -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="5"
+        android:pathData="M54,30 A24,24 0 1,1 53.99,30 Z" />
+    <!-- tick at 12 -->
+    <path android:fillColor="#FFFFFF" android:pathData="M51.5,34 h5 v6 h-5 Z" />
+    <!-- check-mark hands -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="5.5"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M43,55 L51,63 L66,46" />
+</vector>
